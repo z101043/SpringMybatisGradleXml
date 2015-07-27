@@ -1,0 +1,109 @@
+apply plugin: 'java'
+apply plugin: 'war'
+apply plugin: 'eclipse-wtp'
+
+ext {
+    javaVersion   = '1.7'
+    springVersion = '4.1.7.RELEASE'
+}
+
+sourceCompatibility = javaVersion 
+targetCompatibility = javaVersion
+version = '1.0'
+[compileJava, compileTestJava]*.options*.encoding = 'UTF-8'
+
+jar {
+    manifest {
+        attributes 'Implementation-Title': 'Gradle Quickstart',
+                   'Implementation-Version': version
+    }
+}
+
+sourceSets {
+    generated {
+        java {
+            srcDirs = ['src/main/generated']
+        }
+    }
+}
+
+configurations {
+    querydslapt
+}
+
+repositories {
+    mavenCentral() 
+}
+
+dependencies {
+	compile "org.springframework:spring-webmvc:$springVersion", 
+				"javax.servlet:jstl:1.2", 
+				"ch.qos.logback:logback-classic:1.1.3", 
+				"commons-dbcp:commons-dbcp:1.4", 
+				"org.springframework:spring-jdbc:$springVersion", 
+				"mysql:mysql-connector-java:5.1.36", 
+				"org.mybatis:mybatis:3.3.0", 
+				"org.mybatis:mybatis-spring:1.2.3", 
+				"com.fasterxml.jackson.core:jackson-databind:2.4.3", 
+				"commons-io:commons-io:2.4", 
+				"commons-fileupload:commons-fileupload:1.3.1", 
+				"org.hibernate:hibernate-validator:5.2.0.Final" 
+				
+	providedCompile "javax.servlet:javax.servlet-api:3.0.1", 
+							 "javax.servlet.jsp:jsp-api:2.2", 
+							 "org.projectlombok:lombok:1.16.4"
+    
+    testCompile "junit:junit:4.12", 
+    				  "org.springframework:spring-test:$springVersion"
+    				  
+}
+
+
+test {
+    systemProperties 'property': 'value'
+}
+
+uploadArchives {
+    repositories {
+       flatDir {
+           dirs 'repos'
+       }
+    }
+}
+
+eclipse {
+    classpath {
+        downloadSources = true
+    }
+    wtp {
+        facet {
+        	//facet name: 'jst.web', version: '3.0' // Servlet Spec Version 지정, 미 지정시 2.4 
+        	//.settings\org.eclipse.wst.common.project.facet.core.xml에서 확인 가능하며 작동 이상으로 아래 file로 대체 
+        	file {
+		        whenMerged { wtpFacet ->
+		          def installedJstFacet = wtpFacet.facets.find { facet ->
+		            facet.name == 'jst.web' && facet.type == org.gradle.plugins.ide.eclipse.model.Facet.FacetType.installed
+		          	}
+		          installedJstFacet.version = '3.0'
+		         }
+		    }
+		    
+            facet name: 'jst.java' , version: '1.7' // Java Version 지정, 1.7 ...
+            facet name: 'wst.jsdt.web', version: '1.0' // javascript 버전 1
+        }
+    }
+    project {
+      natures 'com.google.gwt.eclipse.core.gwtNature'
+	}
+}
+
+// 프로젝트 빌드 시 폴더 생성
+task initProject << {
+def webappDir = "$rootDir/src/main/webapp"
+file(webappDir + "/WEB-INF/spring/appServlet").mkdirs()
+file(webappDir + "/WEB-INF/views").mkdirs()
+file(webappDir + "/resources").mkdirs()
+file(webappDir + "/META-INF").mkdir()
+}
+
+tasks.eclipse.dependsOn initProject
